@@ -829,6 +829,22 @@ class UserLeaveRequestCreationForm(BaseModelForm):
         }
 
 
+def _exclude_compensatory_leave_types(form):
+    """
+    Compensatory leave types are earned through compensatory leave requests,
+    never allocated by hand, so they are not offered as a leave type. A request
+    already saved with one keeps it, so editing it still shows its type.
+    """
+    field = form.fields.get("leave_type_id")
+    if field is None:
+        return
+    keep = Q(is_compensatory_leave=False)
+    current = getattr(form.instance, "leave_type_id_id", None)
+    if current:
+        keep |= Q(pk=current)
+    field.queryset = field.queryset.filter(keep)
+
+
 class LeaveAllocationRequestForm(BaseModelForm):
     """
     Form for creating a leave allocation request.
@@ -841,6 +857,10 @@ class LeaveAllocationRequestForm(BaseModelForm):
     """
 
     cols = {"description": 12}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _exclude_compensatory_leave_types(self)
 
     def as_p(self, *args, **kwargs):
         """
@@ -886,6 +906,10 @@ class LeaveAllocationBulkForm(BaseModelForm):
     )
     requested_days = forms.FloatField(required=True, label=_("Requested Days"))
     is_approved = forms.BooleanField(required=False, label=_("Approve"))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        _exclude_compensatory_leave_types(self)
 
     class Meta:
         """
