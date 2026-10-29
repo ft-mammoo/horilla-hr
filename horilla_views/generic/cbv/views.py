@@ -554,6 +554,8 @@ class HorillaListView(ListView):
         if request and len(nested_fields) >= 1:
             self.template_name = "generic/nested_group_by_table.html"
             # Skip flat list pagination; the nested engine paginates top-level groupers itself.
+            # The toolbar's "Select (N)" still counts every record the filter matches.
+            context["grouped_select_total"] = queryset.count()
             context["queryset"] = queryset[:1]
             try:
                 context["nested_groups"] = nested_group_by_queryset(
@@ -584,6 +586,7 @@ class HorillaListView(ListView):
                 self.group_by_template_name or "generic/group_by_table.html"
             )
             # group_by paginates groupers itself; keep a tiny queryset so bulk-select chrome (`queryset|length`) still works.
+            context["grouped_select_total"] = queryset.count()
             context["queryset"] = queryset[:1]
             try:
                 context["groups"] = group_by_queryset(
