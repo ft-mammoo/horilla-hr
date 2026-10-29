@@ -1558,9 +1558,9 @@ def user_leave_cancel(request, id):
         else:
             messages.error(request, _("You can't cancel this leave request."))
         return HorillaRedirect(request)
-    form = RejectForm()
+    form = RejectForm(request.POST or None)
+    form.fields["reason"].widget.attrs["placeholder"] = _("Reason for Cancellation")
     if request.method == "POST":
-        form = RejectForm(request.POST)
         if form.is_valid():
             leave_request, error = request_leave_cancellation(
                 id, form.cleaned_data["reason"], request.user.employee_get
