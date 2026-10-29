@@ -1697,11 +1697,11 @@ class LeaveRequest(HorillaModel):
 
     def is_attendance_request_cancelled(self):
         """
-        method to change background if they are cancelled
+        row attribute hook for cancelled requests; cancelled rows are not
+        highlighted, so there is nothing to add
         """
 
-        if self.status == "cancelled" and self.end_date >= date.today():
-            return 'style="background-color: lightgrey"'
+        return ""
 
     def leave_requests_detail_view(self):
         """
@@ -2552,8 +2552,11 @@ class LeaveAllocationRequest(HorillaModel):
         )
 
     def diff_cell(self):
-        if self.status == "rejected":
-            return 'style="background-color: rgba(255, 166, 0, 0.158);"'
+        """
+        row attribute hook; rejected allocation requests are no longer
+        highlighted, so there is nothing to add
+        """
+        return ""
 
     def leave_request_allocation_detail_subtitle(self):
         """
