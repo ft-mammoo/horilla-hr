@@ -119,7 +119,11 @@ class TestEmployeesWithoutAShift(TestCase):
             from_date=MONDAY.isoformat(),
             to_date=FRIDAY.isoformat(),
         )
-        self.assertIn("Office", str(data))
+        # The Office department, with the one employee's hour of overtime, all pending.
+        (office,) = data["departments"]
+        self.assertEqual(office["department"], "Office")
+        self.assertEqual(office["employees"], 1)
+        self.assertEqual(office["total_hours"], 1.0)
 
 
 class TestManagerScope(TestCase):
