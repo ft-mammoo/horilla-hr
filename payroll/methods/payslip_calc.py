@@ -440,7 +440,9 @@ def calculate_allowance(**kwargs):
             context["_basic_lop"] = cut
 
         record(context, allowance, amount)
-        outside = allowance.pk not in in_structure
+        # Only where the structure lists its components. A structure that lists none leaves
+        # everything to direct targeting, and then every earning is part of the package.
+        outside = bool(in_structure) and allowance.pk not in in_structure
         accumulate(context, amount, inside_ctc=not outside)
         computed.append((allowance, amount, outside))
 
@@ -454,8 +456,10 @@ def calculate_allowance(**kwargs):
             "title": allowance.title,
             "is_taxable": allowance.is_taxable,
             "amount": amount,
-            # Paid on top of a CTC Down package rather than out of it.
-            "outside_ctc": bool(outside and context.get(GROSS_IS_FIXED)),
+            # Paid on top of a CTC Down package rather than out of it; absent otherwise.
+            **(
+                {"outside_ctc": True} if outside and context.get(GROSS_IS_FIXED) else {}
+            ),
         }
         for taxable in (True, False)
         for allowance, amount, outside in computed
