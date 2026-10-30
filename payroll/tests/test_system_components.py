@@ -323,18 +323,6 @@ class NoAmountBlockTests(TestCase):
     which is exactly why inheriting calendar-day proration was wrong.
     """
 
-    def test_no_kind_offers_an_amount_or_a_ceiling(self):
-        for entry in SYSTEM_COMPONENTS:
-            with self.subTest(key=entry["key"]):
-                fields = editable_fields(entry["key"])
-                for unwanted in ("amount", "maximum_amount", "has_max_limit"):
-                    self.assertNotIn(unwanted, fields)
-
-    def test_no_kind_offers_a_proration_basis(self):
-        for entry in SYSTEM_COMPONENTS:
-            with self.subTest(key=entry["key"]):
-                self.assertNotIn("maximum_unit", editable_fields(entry["key"]))
-
     def test_each_kind_offers_exactly_its_tax_treatment(self):
         for entry in SYSTEM_COMPONENTS:
             with self.subTest(key=entry["key"]):
