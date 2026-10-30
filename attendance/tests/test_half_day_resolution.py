@@ -737,6 +737,55 @@ class DayHoursSaveTests(PopoverStatusTests):
         # The Save button sits after the scrolling body, at the foot of the panel.
         self.assertLess(html.index('class="crp-scroll"'), html.index('id="crp-save"'))
 
+    def _full_leave(self):
+        from leave.models import LeaveRequest, LeaveType
+
+        LeaveRequest.objects.create(
+            employee_id=self.employee,
+            leave_type_id=LeaveType.objects.create(name="Full", payment="paid"),
+            start_date=WEDNESDAY,
+            end_date=WEDNESDAY,
+            requested_days=1,
+            description="Test",
+            status="approved",
+        )
+
+    def test_an_unresolved_leave_clash_can_be_saved_as_it_stands(self):
+        self._full_leave()
+        self._attend("08:00")
+        html = self._panel()
+        self.assertIn('data-conflict="1"', html)
+        self.assertIn('data-conflict-title="Resolve This Conflict?"', html)
+        self.assertNotRegex(html, r'id="crp-save"\s+disabled')
+
+    def test_a_day_without_a_clash_keeps_save_off_until_something_changes(self):
+        self._attend("08:00")
+        html = self._panel()
+        self.assertNotIn('data-conflict="1"', html)
+        self.assertRegex(html, r'id="crp-save"\s+disabled')
+
+    def test_answering_the_confirmation_does_not_count_as_an_outside_click(self):
+        """The dialog sits outside the popover; closing it there emptied the form before the save read it."""
+        from django.template.loader import get_template
+
+        source = get_template(
+            "attendance/monthly_summary/_calendar_modal_host.html"
+        ).template.source
+        self.assertIn(".closest('.swal2-container')", source)
+
+    def test_a_resolved_clash_does_not_settle_again(self):
+        from attendance.models import AttendanceConflictResolution
+
+        self._full_leave()
+        self._attend("08:00")
+        AttendanceConflictResolution._base_manager.create(
+            employee_id=self.employee,
+            date=WEDNESDAY,
+            resolution="full_present",
+            conflict_type="paid_leave",
+        )
+        self.assertNotIn('data-conflict="1"', self._panel())
+
     def test_hours_up_to_24_are_saved(self):
         from attendance.models import AttendanceDailyHours
 
