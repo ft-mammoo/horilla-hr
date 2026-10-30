@@ -45,7 +45,9 @@ class FullPayMonthFactor(StructureTypeFixture):
         )
 
 
-class OutsideTheStructure(StructureTypeFixture):
+class OutsideHelpers:
+    """Shared helpers, deliberately not a TestCase so subclasses do not inherit (and re-run) each other's tests."""
+
     def pay(self, with_bonus):
         structure = self.ctc_structure("C1", 50.0, 400.0)
         kw = dict(
@@ -70,27 +72,6 @@ class OutsideTheStructure(StructureTypeFixture):
     def rows(self, payslip):
         return {row["title"]: row for row in payslip.pay_head_data["allowances"]}
 
-    def test_the_balance_is_the_same_with_or_without_the_bonus(self):
-        plain = self.pay(with_bonus=False)
-        Payslip.objects.all().delete()
-        Contract.objects.all().delete()
-        with_bonus = self.pay(with_bonus=True)
-        self.assertAlmostEqual(
-            self.rows(with_bonus)["C1 Special"]["amount"],
-            self.rows(plain)["C1 Special"]["amount"],
-            places=2,
-        )
-
-    def test_the_bonus_is_paid_in_full_on_top_of_the_package(self):
-        payslip = self.pay(with_bonus=True)
-        self.assertAlmostEqual(self.rows(payslip)["Xmas"]["amount"], 5000.0, places=2)
-        self.assertTrue(self.rows(payslip)["Xmas"]["outside_ctc"])
-        self.assertAlmostEqual(payslip.gross_pay, 60000.0 + 5000.0, places=2)
-
-    def test_structure_components_are_not_marked_outside(self):
-        payslip = self.pay(with_bonus=True)
-        self.assertFalse(self.rows(payslip)["C1 HRA"].get("outside_ctc"))
-
     def add_generated_earning(self, title, **kw):
         """An earning the way a loan, advance, reimbursement or encashment raises it: one date, one employee."""
         earning = Allowance.objects.create(
@@ -114,6 +95,29 @@ class OutsideTheStructure(StructureTypeFixture):
             **kw,
         )
         deduction.specific_employees.add(self.employee)
+
+
+class OutsideTheStructure(OutsideHelpers, StructureTypeFixture):
+    def test_the_balance_is_the_same_with_or_without_the_bonus(self):
+        plain = self.pay(with_bonus=False)
+        Payslip.objects.all().delete()
+        Contract.objects.all().delete()
+        with_bonus = self.pay(with_bonus=True)
+        self.assertAlmostEqual(
+            self.rows(with_bonus)["C1 Special"]["amount"],
+            self.rows(plain)["C1 Special"]["amount"],
+            places=2,
+        )
+
+    def test_the_bonus_is_paid_in_full_on_top_of_the_package(self):
+        payslip = self.pay(with_bonus=True)
+        self.assertAlmostEqual(self.rows(payslip)["Xmas"]["amount"], 5000.0, places=2)
+        self.assertTrue(self.rows(payslip)["Xmas"]["outside_ctc"])
+        self.assertAlmostEqual(payslip.gross_pay, 60000.0 + 5000.0, places=2)
+
+    def test_structure_components_are_not_marked_outside(self):
+        payslip = self.pay(with_bonus=True)
+        self.assertFalse(self.rows(payslip)["C1 HRA"].get("outside_ctc"))
 
     def test_loan_advance_reimbursement_and_encashment_payouts_are_all_on_top(self):
         baseline = self.rows(self.pay(with_bonus=False))["C1 Special"]["amount"]
@@ -219,7 +223,7 @@ class OutsideTheStructure(StructureTypeFixture):
         self.assertIn("Outside The Salary Structure", " ".join(working["notes"]))
 
 
-class CtcBreakDown(OutsideTheStructure):
+class CtcBreakDown(OutsideHelpers, StructureTypeFixture):
     """The block under the tax working that shows how a CTC Down payslip adds up to its CTC."""
 
     def test_the_parts_add_up_to_the_package_with_the_bonus_listed_outside(self):

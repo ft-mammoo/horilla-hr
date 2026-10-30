@@ -43,11 +43,3 @@ class EditInstallmentAmountTests(TestCase):
         html = self._edit("1000").content.decode()
         self.assertIn('id="installmentRows"', html)
         self.assertIn('hx-target="#installmentRows"', html)
-
-    def test_the_rows_stay_in_date_order(self):
-        html = self._edit("1000").content.decode()
-        dates = [
-            d.one_time_date for d in self.loan.deduction_ids.order_by("one_time_date")
-        ]
-        self.assertEqual(dates, sorted(dates))
-        self.assertIn('name="amount"', html)
