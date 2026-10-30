@@ -673,7 +673,7 @@ class SettingsModalTests(Fixture):
         html = self._modal().content.decode()
         self.assertIn('id="pbSettingsForm"', html)
         self.assertNotIn("<html", html)
-        self.assertNotIn("Payroll runs", html)
+        self.assertNotIn("Payroll Batches", html)
 
     def test_saving_in_the_modal_stores_it_and_reloads_the_page_behind(self):
         response = self._modal(
