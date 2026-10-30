@@ -180,6 +180,13 @@ def earning_workings(payslip):
             allowances.get(row.get("allowance_id")), row, amount, context
         )
         entry["taxable"] = bool(row.get("is_taxable", True))
+        if row.get("outside_ctc"):
+            entry["notes"][:0] = [
+                _("Extra Pay, Outside The Salary Structure."),
+                _(
+                    "It Is Added On Top Of The CTC, So The Other Earnings Stay The Same."
+                ),
+            ]
         entry["notes"].append(
             _("Counts toward taxable gross.") if entry["taxable"] else _("Not taxable.")
         )
