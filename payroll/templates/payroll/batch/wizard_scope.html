@@ -155,7 +155,7 @@
       days = Math.round((to - from) / 86400000) + 1;
     }
     end.value = iso(to);
-    if (note) note.textContent = days + ' {% trans "days" %}' + (to.getUTCMonth() !== from.getUTCMonth() ? ' · {% trans "crosses into" %} ' + FULL[to.getUTCMonth()] : '');
+    if (note) note.textContent = days + ' {% trans "days"|escapejs %}' + (to.getUTCMonth() !== from.getUTCMonth() ? ' · {% trans "crosses into"|escapejs %} ' + FULL[to.getUTCMonth()] : '');
     if (name && !nameTouched) {
       name.value = (s.d === 1) ? FULL[s.mo] + ' ' + s.y : label(from) + ' – ' + label(to);
     }
