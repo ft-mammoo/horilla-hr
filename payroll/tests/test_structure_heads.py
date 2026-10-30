@@ -380,33 +380,26 @@ class DetailModalStructureTests(TestCase):
         basic pay is what.
         """
         panel = self._employees_panel()
-        self.assertIn("Golden Contract", panel)
+        self.assertIn("Edit this contract", panel)
         self.assertIn("30000.00", panel)
 
-    def test_the_employees_tab_leads_with_the_figure_the_mode_reads(self):
-        """
-        Under Gross Up the wage is basic pay and the CTC is only a target;
-        under CTC Down it is the other way round, so the columns swap.
-        """
+    def test_the_employees_tab_shows_only_the_figure_the_mode_reads(self):
+        """Gross Up has no Wage or Monthly CTC column; CTC Down has Monthly CTC but no Wage."""
 
-        def header_order():
-            # Sliced to the table's own thead: the labels sit on their own
-            # lines inside an {% if %}, so there is no ">Wage<" to match, and
-            # "Wage" appears further down the panel as well.
-            head = (
+        def head():
+            return (
                 self._employees_panel()
                 .split('class="ss-emp__table"')[1]
                 .split("</thead>")[0]
             )
-            return head.index("Wage"), head.index("Monthly CTC")
 
-        wage, ctc = header_order()
-        self.assertLess(wage, ctc)
+        self.assertNotIn("Wage", head())
+        self.assertNotIn("Monthly CTC", head())
 
         self.structure.structure_mode = "ctc_down"
         self.structure.save()
-        wage, ctc = header_order()
-        self.assertLess(ctc, wage)
+        self.assertIn("Monthly CTC", head())
+        self.assertNotIn("Wage", head())
 
     def test_the_component_table_no_longer_scrolls_sideways(self):
         """
