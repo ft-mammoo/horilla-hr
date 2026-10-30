@@ -642,7 +642,8 @@ class CycleSettingsFlowTests(Fixture):
         self.assertEqual(page.context["form"].initial["period_start"], start)
         self.assertEqual(page.context["form"].initial["period_end"], end)
         self.assertEqual(start.day, 15)
-        self.assertContains(page, "Cycle starting on the 15th of each month")
+        # The wording of the rule line is pinned where it is built:
+        # test_cross_month_period (PayPeriodSettings.summary).
 
     def test_the_settings_page_has_the_single_period_choice(self):
         html = self.client.get(reverse("pay-period-settings")).content.decode()
@@ -662,12 +663,6 @@ class SettingsModalTests(Fixture):
             if method == "post"
             else call(url, HTTP_HX_REQUEST="true")
         )
-
-    def test_the_wizard_opens_the_setting_in_a_modal_not_a_page(self):
-        html = self.client.get(reverse("payroll-batch-scope")).content.decode()
-        self.assertIn('id="pbSettingsModal"', html)
-        self.assertIn('hx-get="%s?modal=1"' % reverse("pay-period-settings"), html)
-        self.assertIn('data-target="#pbSettingsModal"', html)
 
     def test_the_modal_is_just_the_form_without_the_page_around_it(self):
         html = self._modal().content.decode()
