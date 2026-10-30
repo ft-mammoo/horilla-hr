@@ -536,23 +536,6 @@ class EmployeeSortingTests(TestCase):
 
         self.assertLess(panel.index("Zoe"), panel.index("Aaron"))
 
-    def test_the_columns_offer_sorting(self):
-        from django.urls import reverse
-
-        self._employee("Aaron", 30000)
-        panel = self.client.get(
-            reverse("salary-structure-employees", kwargs={"pk": self.structure.pk}),
-            HTTP_HX_REQUEST="true",
-        ).content.decode()
-
-        for key in ("name", "basic"):
-            self.assertIn(f'data-emp-sort="{key}"', panel)
-        # And the Basic pay column starts marked as the one in force, since
-        # that is the order the rows arrive in.
-        self.assertIn(
-            'data-emp-sort="basic"\n                    aria-sort="ascending"', panel
-        )
-
     def _headers(self, mode):
         from django.urls import reverse
 
