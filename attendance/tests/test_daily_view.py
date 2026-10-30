@@ -682,7 +682,9 @@ class DailyGeometryTests(TestCase):
             ".dv-day { width: max(30px, calc((100cqw - 170px) / 31));", self.css
         )
         cell_rule = next(
-            line for line in self.css.splitlines() if line.strip().startswith(".dv-cell {")
+            line
+            for line in self.css.splitlines()
+            if line.strip().startswith(".dv-cell {")
         )
         self.assertNotIn("width:", cell_rule)
         self.assertIn("height: 48px;", cell_rule)
