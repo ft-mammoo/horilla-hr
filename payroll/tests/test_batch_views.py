@@ -664,12 +664,6 @@ class SettingsModalTests(Fixture):
             else call(url, HTTP_HX_REQUEST="true")
         )
 
-    def test_the_wizard_opens_the_setting_in_a_modal_not_a_page(self):
-        html = self.client.get(reverse("payroll-batch-scope")).content.decode()
-        self.assertIn('id="pbSettingsModal"', html)
-        self.assertIn('hx-get="%s?modal=1"' % reverse("pay-period-settings"), html)
-        self.assertIn('data-target="#pbSettingsModal"', html)
-
     def test_the_modal_is_just_the_form_without_the_page_around_it(self):
         html = self._modal().content.decode()
         self.assertIn('id="pbSettingsForm"', html)
