@@ -642,7 +642,8 @@ class CycleSettingsFlowTests(Fixture):
         self.assertEqual(page.context["form"].initial["period_start"], start)
         self.assertEqual(page.context["form"].initial["period_end"], end)
         self.assertEqual(start.day, 15)
-        self.assertContains(page, "Cycle starting on the 15th of each month")
+        # The wording of the rule line is pinned where it is built:
+        # test_cross_month_period (PayPeriodSettings.summary).
 
     def test_the_settings_page_has_the_single_period_choice(self):
         html = self.client.get(reverse("pay-period-settings")).content.decode()
