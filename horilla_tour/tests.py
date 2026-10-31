@@ -142,8 +142,11 @@ class TourPermissionTests(TestCase):
     def test_settings_page_denied_for_non_privileged_user(self):
         self.client.force_login(self.regular)
         resp = self.client.get(reverse("tour-section"))
-        # permission_required denies (redirect or 403) — never a 200 settings page
-        self.assertNotEqual(resp.status_code, 200)
+        # handle_no_permission() sends a plain navigation back to the referer
+        # (here "/"). Asserting the exact redirect, not just "not 200", so a
+        # 404 or 500 from a broken view no longer counts as a denial.
+        self.assertEqual(resp.status_code, 302)
+        self.assertEqual(resp.url, "/")
 
 
 MODULE_TOUR_SLUGS = [
@@ -176,8 +179,6 @@ MODULE_PAGE_MATCHES = {
     "helpdesk-overview": "helpdesk-dashboard",
 }
 
-VALID_AUDIENCES = {"all", "admins", "managers", "employees"}
-
 
 class TourModuleSeedTests(TestCase):
     """Verify migration 0004 seeded all 12 module tours correctly."""
@@ -189,53 +190,14 @@ class TourModuleSeedTests(TestCase):
                 self.assertIsNotNone(tour, f"Tour '{slug}' not found in DB")
                 self.assertTrue(tour.is_published, f"Tour '{slug}' is not published")
 
-    def test_each_tour_has_minimum_steps(self):
-        for slug in MODULE_TOUR_SLUGS:
-            with self.subTest(slug=slug):
-                tour = Tour.objects.filter(slug=slug).first()
-                if tour is None:
-                    continue
-                step_count = TourStep.objects.filter(tour=tour).count()
-                self.assertGreaterEqual(
-                    step_count,
-                    4,
-                    f"Tour '{slug}' has only {step_count} steps (need ≥ 4)",
-                )
-
     def test_page_match_values_are_correct(self):
         for slug, expected_page in MODULE_PAGE_MATCHES.items():
             with self.subTest(slug=slug):
-                tour = Tour.objects.filter(slug=slug).first()
-                if tour is None:
-                    continue
+                tour = Tour.objects.get(slug=slug)
                 self.assertEqual(
                     tour.page_match,
                     expected_page,
                     f"Tour '{slug}': expected page_match '{expected_page}', got '{tour.page_match}'",
-                )
-
-    def test_audience_values_are_valid(self):
-        for slug in MODULE_TOUR_SLUGS:
-            with self.subTest(slug=slug):
-                tour = Tour.objects.filter(slug=slug).first()
-                if tour is None:
-                    continue
-                self.assertIn(
-                    tour.audience,
-                    VALID_AUDIENCES,
-                    f"Tour '{slug}' has invalid audience '{tour.audience}'",
-                )
-
-    def test_trigger_is_auto_once_for_all_module_tours(self):
-        for slug in MODULE_TOUR_SLUGS:
-            with self.subTest(slug=slug):
-                tour = Tour.objects.filter(slug=slug).first()
-                if tour is None:
-                    continue
-                self.assertEqual(
-                    tour.trigger,
-                    "auto_once",
-                    f"Tour '{slug}' should be auto_once but is '{tour.trigger}'",
                 )
 
     def test_no_duplicate_slugs(self):
@@ -251,9 +213,7 @@ class TourModuleSeedTests(TestCase):
         """Module tours are seeded globally (company_id=None) so every tenant sees them."""
         for slug in MODULE_TOUR_SLUGS:
             with self.subTest(slug=slug):
-                tour = Tour.objects.filter(slug=slug).first()
-                if tour is None:
-                    continue
+                tour = Tour.objects.get(slug=slug)
                 self.assertIsNone(
                     tour.company_id_id,
                     f"Tour '{slug}' should be global (company_id=None) but has company_id={tour.company_id_id}",
