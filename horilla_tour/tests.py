@@ -15,6 +15,8 @@ from django.urls import reverse
 from base.models import Company
 from employee.models import Employee
 from horilla.horilla_middlewares import set_selected_company
+from horilla.testkit import make_employee
+from horilla.testkit import make_employee
 from horilla_auth.models import HorillaUser
 from horilla_tour.models import Tour, TourProgress, TourStep
 
@@ -69,7 +71,16 @@ class TourApiTests(TestCase):
         self.employee = HorillaUser.objects.create_user(
             username="tour_emp", email="emp@t.com", password="pass12345"
         )
-        attach_employee(self.employee, "Emp", "User")
+        # A real employee belongs to a company. Without work-info, the
+        # request is scoped to "all my companies" with no companies, and the
+        # company manager then hides every tour, global ones included.
+        make_employee(
+            company=make_company("Tour Co", "addr"),
+            email="emp@t.com",
+            first_name="Emp",
+            last_name="User",
+            user=self.employee,
+        )
         self.active_url = reverse("tour-active")
         self.progress_url = reverse("tour-progress")
 
